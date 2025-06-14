@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Subject</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap');
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #fff;
+            padding: 25px;
+            margin: 0;
+            color: #333;
+        }
+
+        h2 {
+            font-weight: 500;
+            color: #28a745; /* Green title */
+            margin-bottom: 20px;
+        }
+
+        .form-container {
+            background-color: #f8f9fa;
+            padding: 30px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #495057;
+        }
+
+        .form-group input[type="text"],
+        .form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 1em;
+        }
+
+        .form-group input[type="text"]:focus,
+        .form-group select:focus {
+            border-color: #80bdff;
+            outline: none;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+
+        /* Basic button styling */
+        button[type="submit"] {
+            background-color: #28a745; /* Green submit button */
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s ease;
+            margin-top: 10px;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #218838;
+        }
+
+        .course-selection {
+             /* Add specific styling if needed */
+             margin-bottom: 30px;
+             padding-bottom: 20px;
+             border-bottom: 1px solid #dee2e6;
+        }
+    </style>
+</head>
+<body>
+    <h2>Add Subject to Course</h2>
+
+    {# Display messages passed from the view - ADDED BLOCK #}
+    {% if message %}
+        <p style="color: green; font-weight: bold; text-align: center; margin-bottom: 15px;">{{ message }}</p>
+    {% endif %}
+    {% if error %}
+        <p style="color: red; font-weight: bold; text-align: center; margin-bottom: 15px;">{{ error }}</p>
+    {% endif %}
+    {# End message display block #}
+
+    <div class="form-container">
+        <form method="post">
+             {% csrf_token %}
+            <div class="course-selection form-group">
+                <label for="select_course">Select Course:</label>
+                <select id="select_course" name="selected_course" required>
+                    <option value="" disabled selected>-- Choose a Course --</option>
+                    {% for course in courses %}
+                        <option value="{{ course.id }}">{{ course.name }}</option>
+                    {% empty %}
+                         <option value="" disabled>No courses found. Create a course first.</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="subject_name">Subject Name:</label>
+                <input type="text" id="subject_name" name="subject_name" required>
+            </div>
+
+            <div class="form-group">
+                <label for="subject_teacher">Subject Teacher:</label>
+                <input type="text" id="subject_teacher" name="subject_teacher" required>
+            </div>
+
+            <button type="submit">Add Subject</button>
+        </form>
+    </div>
+</body>
+</html>

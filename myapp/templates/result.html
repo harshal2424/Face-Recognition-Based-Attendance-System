@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Result</title>
+</head>
+<body>
+    <h1>Classroom Attendance</h1>
+    <!-- Display classroom photo -->
+    {% if classroom_image_url %}
+    <p> Classroom Photo: <IMAGE></p>
+    <img src="{{MEDIA_URL}}{{classroom_image_url}}" alt="Classroom Image" style="max-width: 300px; height: auto;">
+    {% else %}
+    <p>No classroom image available.</p>
+    {% endif %}
+
+    <br>
+    <br>
+
+    {% if processed_faces %}
+    <div>
+        <p> Faces found in the Photo: <IMAGE></p>
+        {% for face in processed_faces %}
+            <img src="{{ face }}" alt="Processed Face" style="max-width: 100px; height: auto;">
+        {% endfor %}
+    </div>
+    {% else %}
+    <p>No processed faces available.</p>
+    {% endif %}
+
+    <br>
+    <br>
+
+    <form method="POST">
+        {% csrf_token %}
+        <label for="date">Date:</label>
+        <input type="date" name="date" value="{{ today }}" required><br><br>
+
+        <!-- Dropdown for courses -->
+        <label for="course">Select Course:</label>
+        <select id="course" name="course">
+            <option value="" disabled selected>-- Select a course --</option>
+            {% for course in courses %}
+                <option value="{{ course.name }}" required>{{ course.name }}</option>
+            {% endfor %}
+        </select><br><br>
+
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>Student Photo</th>
+                    <th>Name</th>
+                </tr>
+            </thead>
+              <tbody>
+                {% for face in processed_faces %}
+                <tr>
+                    <input type="hidden" name="face_image_url_{{ forloop.counter }}" value="{{ face }}">
+                    <td><img src="{{ face }}" alt="Processed Face" style="max-width: 100px; height: auto;"></td>
+                    <td>
+                        <select id="student" name="student_{{ forloop.counter }}">
+                            <option value="Other" selected>Other</option>
+                            {% for student in students %}
+                                <option value="{{ student.name }}">{{ student.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>            
+        </table>
+
+        <br>
+
+        <button type="submit">Submit Attendance</button>
+    </form>
+
+    <br>
+    <br>
+    <a href="{% url 'mark_attendance' %}">Click here to mark Attendance manually</a>
+</body>
+</html>

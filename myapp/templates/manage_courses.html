@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Courses</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap');
+        body { font-family: 'Roboto', sans-serif; background-color: #fff; padding: 25px; margin: 0; color: #333; }
+        h2 { font-weight: 500; color: #17a2b8; margin-bottom: 20px; }
+        ul { list-style: none; padding: 0; }
+        li {
+            background-color: #f8f9fa; margin-bottom: 10px; padding: 15px; border: 1px solid #dee2e6; border-radius: 5px;
+            display: flex; justify-content: space-between; align-items: center; /* Align items horizontally */
+        }
+        .course-info { flex-grow: 1; } /* Allow course info to take available space */
+        .course-info a { text-decoration: none; color: #007bff; font-weight: 500; }
+        .course-info a:hover { text-decoration: underline; }
+        .course-info span { color: #6c757d; font-size: 0.9em; margin-left: 10px;}
+        .no-courses { color: #6c757d; }
+        .delete-btn {
+             background-color: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px;
+             cursor: pointer; font-size: 0.9em; transition: background-color 0.3s ease; margin-left: 20px; /* Add space */
+        }
+        .delete-btn:hover { background-color: #c82333; }
+        /* Styles for Django messages (copied from manage_students.html) */
+        .messages { list-style: none; padding: 0; margin-bottom: 15px; }
+        .messages li {
+            padding: 10px; margin-bottom: 5px; border-radius: 4px; text-align: center; font-weight: bold;
+            border: 1px solid transparent;
+        }
+        .messages li.success { background-color: #d4edda; color: #155724; border-color: #c3e6cb; }
+        .messages li.error { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+        .messages li.warning { background-color: #fff3cd; color: #856404; border-color: #ffeeba; }
+        .messages li.info { background-color: #d1ecf1; color: #0c5460; border-color: #bee5eb; }
+    </style>
+</head>
+<body>
+    <h2>Manage Existing Courses</h2>
+
+    {# Display Django messages framework messages #}
+    {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+                <li class="{{ message.tags }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+    {# End messages display #}
+
+    <ul>
+        {% for course in courses %}
+            <li>
+                <div class="course-info">
+                    <a href="{% url 'manage_course_students' course.id %}">{{ course.name }}</a>
+                    <span>({{ course.students.count }} student{{ course.students.count|pluralize }})</span>
+                </div>
+                {# Form for deleting THIS course #}
+                <form action="{% url 'delete_course' course.id %}" method="post" style="display: inline;">
+                     {% csrf_token %}
+                     <button type="submit" class="delete-btn"
+                             onclick="return confirm('Are you sure you want to delete the course \'{{ course.name }}\'? This will also delete associated subjects and attendance records and cannot be undone.');">
+                         Delete
+                     </button>
+                 </form>
+            </li>
+        {% empty %}
+            <li class="no-courses">No courses created yet.</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instructor Dashboard</title>
+    <style>
+        /* --- Keep ALL your existing CSS styles here --- */
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap');
+        body { font-family: 'Roboto', sans-serif; background-color: #f4f7fc; padding: 25px; margin: 0; color: #333; }
+        .container { max-width: 900px; margin: auto; background-color: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); }
+        h2, h3 { font-weight: 500; color: #28a745; margin-bottom: 25px; text-align: center; }
+        h3 { margin-top: 30px; color: #17a2b8; border-top: 1px solid #dee2e6; padding-top: 20px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 500; color: #495057; }
+        .form-group input[type="date"], .form-group input[type="file"], .form-group select, .form-group input[type="text"] { width: 100%; padding: 10px 12px; border: 1px solid #ced4da; border-radius: 4px; box-sizing: border-box; font-size: 1em; }
+        .form-group input[type="file"] { padding: 5px; }
+        .form-group input:focus, .form-group select:focus { border-color: #80bdff; outline: none; box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25); }
+        #select_subject:disabled { background-color: #e9ecef; cursor: not-allowed; }
+        button[type="submit"] { background-color: #28a745; color: white; padding: 12px 25px; border: none; border-radius: 4px; cursor: pointer; font-size: 1.1em; transition: background-color 0.3s ease; display: block; width: 100%; margin-top: 15px; }
+        button[type="submit"]:hover { background-color: #218838; }
+        .logout-link { display: block; text-align: center; margin-top: 20px; color: #007bff; text-decoration: none; }
+        .logout-link:hover { text-decoration: underline; }
+        .results-container, .correction-container, .export-container { margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6; }
+        .results-container table { width: 100%; border-collapse: collapse; margin-bottom: 15px;}
+        .results-container th, .results-container td { padding: 8px; border: 1px solid #ddd; text-align: left; }
+        .results-container th { background-color: #e9ecef; }
+        .status-present { color: green; font-weight: bold; }
+        .status-absent { color: red; font-weight: bold; }
+        /* Styles for manual correction section */
+        .correction-item { display: flex; flex-wrap: wrap; align-items: center; gap: 15px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px dotted #eee; }
+        .correction-item img { width: 80px; height: 80px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc; flex-shrink: 0; }
+        .correction-item .form-group { flex-grow: 1; min-width: 200px; margin-bottom: 5px; }
+        .correction-item .unknown-name-input { display: none; margin-top: 5px; }
+        .correction-item select { width: auto; min-width: 200px; }
+        .messages { list-style: none; padding: 0; margin-bottom: 15px; }
+        .messages li { padding: 10px; margin-bottom: 5px; border-radius: 4px; text-align: center; font-weight: bold; border: 1px solid transparent; }
+        .messages li.success { background-color: #d4edda; color: #155724; border-color: #c3e6cb; }
+        .messages li.error { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+        .messages li.warning { background-color: #fff3cd; color: #856404; border-color: #ffeeba; }
+        .messages li.info { background-color: #d1ecf1; color: #0c5460; border-color: #bee5eb; }
+        a.button.disabled { background-color: #6c757d; cursor: not-allowed; pointer-events: none; opacity: 0.65; }
+        a.button { background-color: #17a2b8; color: white; padding: 10px 20px; border-radius: 4px; text-decoration: none; display: inline-block; transition: background-color 0.2s ease; }
+        a.button:hover:not(.disabled) { background-color: #138496; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Instructor Dashboard</h2>
+
+        {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                    <li class="{{ message.tags }}">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <p>Select course, subject, date, and upload up to three group photos.</p>
+
+        <form method="post" enctype="multipart/form-data" id="process-form">
+            {% csrf_token %}
+             <div class="form-group">
+                <label for="select_course">Select Course:</label>
+                <select id="select_course" name="selected_course" required>
+                    <option value="" disabled {% if not processed_course_id %}selected{% endif %}>-- Choose a Course --</option>
+                    {% for course in courses %}
+                        <option value="{{ course.id }}" {% if course.id == processed_course_id %}selected{% endif %}>
+                            {{ course.name }}
+                        </option>
+                    {% empty %}
+                         <option value="" disabled>No courses available</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="select_subject">Select Subject:</label>
+                <select id="select_subject" name="selected_subject" required disabled>
+                    <option value="" disabled selected>-- Select Course First --</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="attendance_date">Select Date:</label>
+                <input type="date" id="attendance_date" name="attendance_date" value="{{ today }}" required>
+            </div>
+
+            {# --- Three separate file inputs --- #}
+            <div class="form-group">
+                <label for="group_photo_1">Upload Group Photo 1 (Optional):</label>
+                <input type="file" id="group_photo_1" name="group_photo_1" accept="image/*">
+            </div>
+             <div class="form-group">
+                <label for="group_photo_2">Upload Group Photo 2 (Optional):</label>
+                <input type="file" id="group_photo_2" name="group_photo_2" accept="image/*">
+            </div>
+             <div class="form-group">
+                <label for="group_photo_3">Upload Group Photo 3 (Optional):</label>
+                <input type="file" id="group_photo_3" name="group_photo_3" accept="image/*">
+            </div>
+            {# --- End file inputs --- #}
+
+            <button type="submit" name="process_attendance">Process Attendance</button>
+        </form>
+
+        {% if processed_data %}
+            <div class="results-container">
+                <h3>Initial Attendance Results for {{ processed_data.course_name }} on {{ processed_data.date }}</h3>
+                <table>
+                   <thead> <tr><th>Roll No</th><th>Name</th><th>Status</th></tr> </thead>
+                    <tbody>
+                        {% for result in processed_data.results %}
+                            <tr>
+                                <td>{{ result.roll_no }}</td>
+                                <td>{{ result.name }}</td>
+                                <td class="status-{% if result.status == 'Present' %}present{% else %}absent{% endif %}">{{ result.status }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="3" style="text-align: center;">No students found for this course.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+
+        {% if manual_correction_data and manual_correction_data.unidentified_faces %}
+            <div class="correction-container">
+                <h3>Manual Attendance Correction</h3>
+                <p>Assign unidentified faces found across all uploaded photos to absent students or mark as unknown.</p>
+                <form method="post" id="correction-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="correction_date" value="{{ manual_correction_data.correction_date }}">
+                    <input type="hidden" name="correction_course_id" value="{{ manual_correction_data.correction_course_id }}">
+
+                    {% for face in manual_correction_data.unidentified_faces %}
+                        <div class="correction-item">
+                            <img src="{{ face.url }}" alt="Unidentified Face {{ face.index }}">
+                            <div class="form-group">
+                                <label for="manual_assign_{{ face.index }}">Assign Face #{{ face.index }} to:</label>
+                                <select name="manual_assignment_{{ face.index }}" id="manual_assign_{{ face.index }}" class="manual-assignment-select" data-face-index="{{ face.index }}">
+                                    <option value="">-- Select Absent Student --</option>
+                                    {% for student in manual_correction_data.absent_students %}
+                                        <option value="{{ student.id }}">{{ student.name }} ({{ student.roll_no }})</option>
+                                    {% endfor %}
+                                    <option value="UNKNOWN">-- Unknown Person --</option>
+                                </select>
+                                <input type="text" name="unknown_name_{{ face.index }}" id="unknown_name_{{ face.index }}" class="unknown-name-input" placeholder="Enter name if known" style="display:none;">
+                            </div>
+                        </div>
+                    {% empty %}
+                         <p>No unidentified faces require correction.</p>
+                    {% endfor %}
+
+                    <button type="submit" name="submit_manual_corrections">Submit Manual Corrections</button>
+                </form>
+            </div>
+        {% endif %}
+
+        {% if courses %}
+        <div class="export-container">
+            <h3>Export Attendance</h3>
+            <p>Select a course above to enable the export button.</p>
+            <a id="export-button" href="#" class="button disabled">
+                Export Attendance for Selected Course
+            </a>
+             <p style="font-size: 0.85em; color: #6c757d; margin-top: 5px;">(Generates an Excel .xlsx file)</p>
+        </div>
+        {% endif %}
+
+
+         <a href="{% url 'login_default' %}" class="logout-link">Logout</a>
+    </div>
+
+    <script>
+       document.addEventListener('DOMContentLoaded', function() {
+            const courseSelectForSubjects = document.getElementById('select_course');
+            const subjectSelect = document.getElementById('select_subject');
+            const subjectsUrl = `{% url 'ajax_load_subjects' %}`;
+            if (courseSelectForSubjects) {
+                courseSelectForSubjects.addEventListener('change', function() {
+                    const courseId = this.value;
+                    const url = `${subjectsUrl}?course_id=${courseId}`;
+                    subjectSelect.innerHTML = '<option value="" disabled selected>Loading...</option>';
+                    subjectSelect.disabled = true;
+                    if (courseId) {
+                        fetch(url).then(response => response.ok ? response.json() : Promise.reject('Network error'))
+                        .then(data => {
+                            if (data.error) { throw new Error(data.error); }
+                            subjectSelect.innerHTML = '<option value="" disabled selected>-- Select Subject --</option>';
+                            if (data.subjects && data.subjects.length > 0) {
+                                data.subjects.forEach(subject => {
+                                    const option = document.createElement('option');
+                                    option.value = subject.id; option.textContent = subject.name;
+                                    subjectSelect.appendChild(option);
+                                });
+                                subjectSelect.disabled = false;
+                            } else { subjectSelect.innerHTML = '<option value="" disabled selected>No subjects found</option>'; }
+                        }).catch(error => {
+                            console.error('Error loading subjects:', error);
+                            subjectSelect.innerHTML = '<option value="" disabled selected>Error loading</option>';
+                        });
+                    } else {
+                         subjectSelect.innerHTML = '<option value="" disabled selected>-- Select Course First --</option>';
+                         subjectSelect.disabled = true;
+                    }
+                });
+                if (courseSelectForSubjects.value) { courseSelectForSubjects.dispatchEvent(new Event('change')); }
+            }
+
+            const courseSelectForExport = document.getElementById('select_course');
+            const exportButton = document.getElementById('export-button');
+            if (courseSelectForExport && exportButton) {
+                 const exportBaseUrl = "{% url 'export_attendance_excel' course_id=0 %}".replace('0/', '');
+                 function updateExportButton() {
+                    const selectedCourseId = courseSelectForExport.value;
+                    if (selectedCourseId) {
+                        exportButton.href = `${exportBaseUrl}${selectedCourseId}/`;
+                        exportButton.classList.remove('disabled');
+                        exportButton.style.cssText = '';
+                    } else {
+                        exportButton.href = "#";
+                        exportButton.classList.add('disabled');
+                        exportButton.style.backgroundColor = '#6c757d';
+                        exportButton.style.cursor = 'not-allowed';
+                        exportButton.style.pointerEvents = 'none';
+                        exportButton.style.opacity = '0.65';
+                    }
+                }
+                courseSelectForExport.addEventListener('change', updateExportButton);
+                updateExportButton();
+            }
+
+            const correctionContainer = document.querySelector('.correction-container');
+            if (correctionContainer) {
+                correctionContainer.addEventListener('change', function(event) {
+                    if (event.target && event.target.classList.contains('manual-assignment-select')) {
+                        const selectedValue = event.target.value;
+                        const faceIndex = event.target.dataset.faceIndex;
+                        const unknownNameInput = document.getElementById(`unknown_name_${faceIndex}`);
+
+                        if (unknownNameInput) {
+                            if (selectedValue === 'UNKNOWN') {
+                                unknownNameInput.style.display = 'block';
+                            } else {
+                                unknownNameInput.style.display = 'none';
+                                unknownNameInput.value = '';
+                            }
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+
+</body>
+</html>

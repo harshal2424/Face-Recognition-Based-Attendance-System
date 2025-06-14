@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            background-color: #f4f7fc;
+            color: #333;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: #343a40;
+            color: #fff;
+            padding-top: 20px;
+            display: flex;
+            flex-direction: column; /* Stack items vertically */
+            height: 100vh; /* Make sidebar full height */
+            position: fixed; /* Fix sidebar position */
+            left: 0;
+            top: 0;
+            box-sizing: border-box; /* Include padding in height/width */
+            padding-bottom: 20px; /* Add padding at the bottom */
+        }
+
+        .sidebar h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-weight: 500;
+        }
+
+        .sidebar a {
+            display: block;
+            color: #adb5bd;
+            padding: 15px 20px;
+            text-decoration: none;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .sidebar a:hover, .sidebar a.active {
+            background-color: #495057;
+            color: #fff;
+            border-left: 3px solid #007bff;
+        }
+
+        .sidebar a.logout-link {
+            margin-top: 30px; /* Add some space above the logout link */
+            color: #ffc107; /* Warning color for logout */
+            border-left: 3px solid transparent; /* Reset border */
+        }
+         .sidebar a.logout-link:hover {
+             background-color: #495057;
+             color: #ffdd57; /* Lighter yellow on hover */
+             border-left: 3px solid #ffc107;
+         }
+
+
+        .content {
+            flex-grow: 1;
+            padding: 30px;
+            margin-left: 250px; /* Offset content by sidebar width */
+        }
+
+        .content h1 {
+            margin-bottom: 20px;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 10px;
+            font-weight: 500;
+        }
+
+        #content-frame {
+            width: 100%;
+            height: calc(100vh - 100px); /* Adjust height based on header */
+            border: none;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h2>Admin Menu</h2>
+        <a href="{% url 'create_course' %}" target="content-frame" onclick="setActive(this)">Create Course</a>
+        <a href="{% url 'add_subject' %}" target="content-frame" onclick="setActive(this)">Add Subject</a>
+        <a href="{% url 'manage_courses' %}" target="content-frame" onclick="setActive(this)">Manage Courses</a> {# <-- ADDED LINK #}
+
+        <a href="{% url 'login_default' %}" class="logout-link">Logout</a>
+    </div>
+
+    <div class="content">
+        <h1>Admin Dashboard</h1>
+        <iframe id="content-frame" name="content-frame" src="{% url 'create_course' %}" >
+            </iframe>
+    </div>
+
+    <script>
+        // Keep existing JavaScript for setActive and iframe load handling
+        function setActive(element) {
+            var links = document.querySelectorAll('.sidebar a:not(.logout-link)');
+            links.forEach(function(link) {
+                link.classList.remove('active');
+            });
+            if (!element.classList.contains('logout-link')) {
+                 element.classList.add('active');
+            }
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            var iframe = document.getElementById('content-frame');
+            var links = document.querySelectorAll('.sidebar a:not(.logout-link)');
+
+            function updateActiveLink() {
+                 // Try-catch in case contentWindow is not accessible (e.g., initial blank state)
+                 try {
+                    var iframeSrc = iframe.contentWindow.location.href;
+                    var activeLinkFound = false;
+                    links.forEach(function(link) {
+                        if (iframeSrc.includes(link.getAttribute('href'))) {
+                            link.classList.add('active');
+                            activeLinkFound = true;
+                        } else {
+                            link.classList.remove('active');
+                        }
+                    });
+                    if (!activeLinkFound && links.length > 0) {
+                        var initialSrc = iframe.getAttribute('src');
+                         if (links[0].getAttribute('href') === initialSrc){
+                               links[0].classList.add('active');
+                         }
+                    }
+                 } catch (e) {
+                     console.warn("Could not access iframe location, possibly due to initial load or cross-origin restriction.");
+                     // Optionally set a default active link here if needed
+                     if (links.length > 0) {
+                          links[0].classList.add('active');
+                     }
+                 }
+            }
+             iframe.onload = updateActiveLink;
+             updateActiveLink(); // Set initial state
+
+             links.forEach(function(link) {
+                 link.addEventListener('click', function(event) {
+                    // Use timeout to allow navigation to start before setting active class
+                     setTimeout(() => setActive(link), 0);
+                 });
+             });
+        });
+    </script>
+</body>
+</html>

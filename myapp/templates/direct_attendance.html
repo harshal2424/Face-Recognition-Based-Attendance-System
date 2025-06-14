@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mark Attendance</title>
+</head>
+<body>
+
+    
+    {% if classroom_image_url %}
+    <h2>Classroom Image</h2>
+    <img src="{{ classroom_image_url }}" alt="Classroom Image" style="max-width: 100%; height: auto;">
+    {% else %}
+    <p>No classroom image uploaded.</p>
+    {% endif %}
+
+    {% if processed_faces %}
+    <h2>Detected Faces</h2>
+    <table>
+        <tr>
+            <th>Face</th>
+            <th>Student</th>
+        </tr>
+        {% for face_url in processed_faces %}
+        <tr>
+            <td><img src="{{ face_url }}" alt="Face" style="width: 100px; height: 100px;"></td>
+            <td>
+                <select name="student_{{ forloop.counter }}">
+                    <option value="">Select Student</option>
+                    {% for student in students %}
+                        <option value="{{ student.id }}">{{ student.name }}</option>
+                    {% endfor %}
+                </select>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+{% else %}
+    <p>No faces detected yet.</p>
+{% endif %}
+
+
+    <h1>Mark Attendance</h1>
+    <form method="POST">
+        {% csrf_token %}
+        <label for="date">Date:</label>
+        <input type="date" name="date" value="{{ today }}" required><br><br>
+
+        <!-- Dropdown for courses -->
+        <label for="course">Select Course:</label>
+        <select id="course" name="course">
+            {% for course in courses %}
+                <option value="{{ course.id }}">{{ course.name }}</option>
+            {% endfor %}
+        </select><br><br>
+
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>Student Name</th>
+                    <th>Roll No</th>
+                    <th>Mark Attendance</th>
+                    <th>Photo</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student in students %}
+                <tr>
+                    <td>{{ student.name }}</td>
+                    <td>{{ student.roll_no }}</td>
+                    <td>
+                        <select name="status_{{ student.id }}">
+                            <option value="Present">Present</option>
+                            <option value="Absent" selected>Absent</option>
+                        </select>
+                    </td>
+                    <td>
+                        <input type="file" name="photo_{{ student.id }}" accept="image/*">
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <button type="submit">Submit Attendance</button>
+    </form>
+</body>
+</html>

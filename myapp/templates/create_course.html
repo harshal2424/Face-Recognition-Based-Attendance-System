@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create New Course</title>
+    <style>
+        /* Using styles from previous version */
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+        :root {
+            --primary-color: #007bff; --secondary-color: #6c757d; --success-color: #28a745;
+            --danger-color: #dc3545; --light-bg: #f8f9fa; --border-color: #dee2e6;
+            --input-border-color: #ced4da; --text-color: #333; --white-color: #fff;
+            --form-padding: 30px; --border-radius: 8px; --box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        }
+        body {
+            font-family: 'Roboto', sans-serif; background-color: var(--white-color);
+            padding: 25px; margin: 0; color: var(--text-color); line-height: 1.6;
+        }
+        h2 {
+            font-weight: 700; color: var(--primary-color); margin-bottom: 25px;
+            text-align: center; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;
+        }
+         h4 { font-weight: 500; color: var(--secondary-color); margin-top: 0; margin-bottom: 20px; }
+        .form-container {
+            background-color: var(--white-color); padding: var(--form-padding);
+            border-radius: var(--border-radius); border: 1px solid var(--border-color);
+            box-shadow: var(--box-shadow); max-width: 600px; margin: auto;
+        }
+        .form-section { margin-bottom: 30px; padding-bottom: 20px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 500; color: #495057; }
+        .form-group input[type="text"] {
+            width: 100%; padding: 10px 15px; border: 1px solid var(--input-border-color);
+            border-radius: 4px; box-sizing: border-box; font-size: 1rem;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .form-group input[type="text"]:focus {
+            border-color: var(--primary-color); outline: none;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+        button[type="submit"] {
+             color: var(--white-color); padding: 12px 25px; border: none;
+             border-radius: 4px; cursor: pointer; font-size: 1rem; font-weight: 500;
+             transition: background-color 0.2s ease, transform 0.1s ease;
+             margin-top: 10px; text-transform: uppercase; letter-spacing: 0.5px;
+             background-color: var(--primary-color); display: block; width: 100%;
+         }
+        button[type="submit"]:hover { background-color: #0056b3; transform: translateY(-1px); }
+         button:active { transform: translateY(0); }
+        .errorlist { color: var(--danger-color); list-style: none; padding: 0; margin-top: 5px; font-size: 0.9em; }
+         .messages { list-style: none; padding: 0; margin-bottom: 20px; }
+         .messages li { padding: 12px 15px; margin-bottom: 10px; border-radius: 4px; text-align: center; font-weight: 500; border: 1px solid transparent; }
+         .messages li.success { background-color: #d4edda; color: #155724; border-color: #c3e6cb; }
+         .messages li.error { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+         .messages li.warning { background-color: #fff3cd; color: #856404; border-color: #ffeeba; }
+         .messages li.info { background-color: #d1ecf1; color: #0c5460; border-color: #bee5eb; }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h2>Create New Course</h2>
+
+        {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                    <li class="{{ message.tags }}">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <form method="post"> {# No enctype needed as no files uploaded here #}
+             {% csrf_token %}
+
+             <div class="form-section">
+                 <h4>Course Details</h4>
+                 {{ course_form.non_field_errors }}
+                 <div class="form-group">
+                     {{ course_form.name.errors }}
+                     <label for="{{ course_form.name.id_for_label }}">Course Name:</label>
+                     {{ course_form.name }}
+                 </div>
+                  <div class="form-group">
+                      {{ course_form.instructor_name.errors }}
+                      <label for="{{ course_form.instructor_name.id_for_label }}">Instructor Name:</label>
+                      {{ course_form.instructor_name }}
+                 </div>
+             </div>
+
+            <button type="submit">Create Course</button>
+        </form>
+    </div>
+</body>
+</html>
